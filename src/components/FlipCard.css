@@ -1,0 +1,7 @@
+.flip-card{position:relative;width:var(--fc-w);max-width:100%;height:var(--fc-h);display:block;padding:0;border:0;border-radius:var(--fc-radius);background:transparent;outline:none;cursor:pointer;perspective:1100px;touch-action:pan-y;-webkit-tap-highlight-color:transparent}
+.flip-card:focus-visible{outline:3px solid rgba(23,105,224,.35);outline-offset:3px}
+.flip-card__rotor{position:absolute;inset:0;display:block;border-radius:inherit;transform-style:preserve-3d;will-change:transform}
+.flip-card__face{position:absolute;inset:0;display:block;overflow:hidden;border-radius:inherit;background:#fff;color:#172033;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.flip-card__face--back{transform:rotateY(180deg)}
+.flip-card__glare{position:absolute;inset:0;background:radial-gradient(circle farthest-side at var(--fc-gx,50%) var(--fc-gy,50%),rgba(255,255,255,.22),transparent 68%);pointer-events:none}
+@media(prefers-reduced-motion:reduce){.flip-card__face{transition:opacity .2s}.flip-card[aria-pressed=true] .flip-card__face--front{opacity:0}.flip-card[aria-pressed=false] .flip-card__face--back{opacity:0}.flip-card__face--back{transform:none}}

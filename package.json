@@ -1,0 +1,20 @@
+{
+  "name": "ccl-tech-store",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node src/catalog.test.js && node src/builderPower.test.js"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "motion": "^13.4.0",
+    "ogl": "^1.0.11",
+    "react": "latest",
+    "react-dom": "latest",
+    "vite": "latest"
+  }
+}
