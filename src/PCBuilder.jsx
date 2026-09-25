@@ -1,27 +1,27 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { formatPrice, products } from './catalog.js'
+import { formatPrice } from './catalog.js'
 import { getPowerEstimate } from './builderPower.js'
+import { getPerformanceEstimate } from './performanceEstimate.js'
 import './builder.css'
 
 const WHATSAPP = '59170000000'
 const STORAGE_KEY = 'ccl-pc-builder-v4'
 const COMPLETE_DISCOUNT_RATE = .05
-const productById = id => products.find(product => product.id === id)
-const categoryOptions = category => products
-  .filter(product => product.category === category)
+const categoryOptions = (categoryId, products) => products
+  .filter(product => product.categoryId === categoryId)
   .map(product => ({ ...product, builderNote: product.builderNote || product.description }))
   .sort((a, b) => Number(Boolean(b.recommended)) - Number(Boolean(a.recommended)) || b.sales - a.sales)
 
 export const builderSteps = [
-  { key: 'case', label: 'Gabinete', short: 'Gabinete', description: 'Empieza por la estructura. El modelo elegido será la base visual de todo el armado.', options: () => categoryOptions('Gabinetes') },
-  { key: 'motherboard', label: 'Placa madre', short: 'Placa', description: 'Define la plataforma. Mostramos únicamente formatos que caben en el gabinete elegido.', options: selected => categoryOptions('Placas madre').filter(option => !selected.case || selected.case.formFactors?.includes(option.formFactor)) },
-  { key: 'cpu', label: 'Procesador', short: 'CPU', description: 'Elige el cerebro del equipo. Solo mostramos opciones compatibles con el socket de la placa.', options: selected => categoryOptions('Procesadores').filter(option => !selected.motherboard || option.socket === selected.motherboard.socket) },
-  { key: 'cooling', label: 'Refrigeración', short: 'Cooler', description: 'Filtramos socket, capacidad térmica y espacio para disipador o radiador.', options: selected => categoryOptions('Refrigeración').filter(option => (!selected.cpu || option.sockets?.includes(selected.cpu.socket)) && (!selected.cpu || option.coolingCapacity >= selected.cpu.powerDraw) && (!selected.case || (option.radiatorSize ? option.radiatorSize <= selected.case.maxRadiatorSize : option.coolerHeight <= selected.case.maxCoolerHeight))) },
-  { key: 'ram', label: 'Memoria RAM', short: 'RAM', description: 'Capacidad para juegos, multitarea y creación de contenido sin interrupciones.', options: selected => categoryOptions('RAM').filter(option => !selected.motherboard || option.memoryType === selected.motherboard.memoryType) },
-  { key: 'gpu', label: 'Tarjeta gráfica', short: 'GPU', description: 'Filtramos por la longitud máxima admitida por el gabinete elegido.', options: selected => categoryOptions('Tarjetas gráficas').filter(option => !selected.case || !option.length || option.length <= selected.case.maxGpuLength) },
-  { key: 'storage', label: 'Almacenamiento', short: 'SSD', description: 'Espacio NVMe rápido para Windows, programas y tu biblioteca de juegos.', options: () => categoryOptions('SSD') },
-  { key: 'power', label: 'Fuente de poder', short: 'Fuente', description: 'Elige una fuente compatible con los componentes de tu configuración.', options: () => categoryOptions('Fuentes de poder').sort((a, b) => a.wattage - b.wattage) },
+  { key: 'case', label: 'Gabinete', short: 'Gabinete', description: 'Empieza por la estructura. El modelo elegido será la base visual de todo el armado.', options: (_selected, products) => categoryOptions('gabinetes', products) },
+  { key: 'motherboard', label: 'Placa madre', short: 'Placa', description: 'Define la plataforma. Mostramos únicamente formatos que caben en el gabinete elegido.', options: (selected, products) => categoryOptions('placas-madre', products).filter(option => !selected.case || selected.case.formFactors?.includes(option.formFactor)) },
+  { key: 'cpu', label: 'Procesador', short: 'CPU', description: 'Elige el cerebro del equipo. Solo mostramos opciones compatibles con el socket de la placa.', options: (selected, products) => categoryOptions('procesadores', products).filter(option => !selected.motherboard || option.socket === selected.motherboard.socket) },
+  { key: 'cooling', label: 'Refrigeración', short: 'Cooler', description: 'Filtramos socket, capacidad térmica y espacio para disipador o radiador.', options: (selected, products) => categoryOptions('refrigeracion', products).filter(option => (!selected.cpu || option.sockets?.includes(selected.cpu.socket)) && (!selected.cpu || option.coolingCapacity >= selected.cpu.powerDraw) && (!selected.case || (option.radiatorSize ? option.radiatorSize <= selected.case.maxRadiatorSize : option.coolerHeight <= selected.case.maxCoolerHeight))) },
+  { key: 'ram', label: 'Memoria RAM', short: 'RAM', description: 'Capacidad para juegos, multitarea y creación de contenido sin interrupciones.', options: (selected, products) => categoryOptions('ram', products).filter(option => !selected.motherboard || option.memoryType === selected.motherboard.memoryType) },
+  { key: 'gpu', label: 'Tarjeta gráfica', short: 'GPU', description: 'Filtramos por la longitud máxima admitida por el gabinete elegido.', options: (selected, products) => categoryOptions('tarjetas-graficas', products).filter(option => !selected.case || !option.length || option.length <= selected.case.maxGpuLength) },
+  { key: 'storage', label: 'Almacenamiento', short: 'SSD', description: 'Espacio NVMe rápido para Windows, programas y tu biblioteca de juegos.', options: (_selected, products) => categoryOptions('ssd', products) },
+  { key: 'power', label: 'Fuente de poder', short: 'Fuente', description: 'Elige una fuente compatible con los componentes de tu configuración.', options: (_selected, products) => categoryOptions('fuentes-de-poder', products).sort((a, b) => a.wattage - b.wattage) },
 ]
 
 const presetDefinitions = [
@@ -30,11 +30,11 @@ const presetDefinitions = [
   { id: 'creator', eyebrow: 'Edición, streaming y 3D', name: 'Creador de contenido', description: 'Más núcleos, memoria y almacenamiento para cargas profesionales.', build: { case: 'ccl-forge-airflow-xl', motherboard: 'ccl-b760-atx-wifi', cpu: 'intel-core-i7-14700k', cooling: 'ccl-airflow-260', ram: 'kingston-fury-ddr5-64gb', gpu: 'msi-rtx-4070-ventus', storage: 'samsung-990-pro-4tb', power: 'ccl-power-850-gold' } },
 ]
 
-const resolveBuild = ids => {
+const resolveBuild = (ids, products) => {
   const resolved = {}
   builderSteps.forEach(step => {
     const id = ids?.[step.key]
-    const option = id && step.options(resolved).find(candidate => candidate?.id === id)
+    const option = id && step.options(resolved, products).find(candidate => candidate?.id === id)
     if (option) resolved[step.key] = option
   })
   if (resolved.power && resolved.power.wattage < getPowerEstimate(resolved).recommendedWattage) delete resolved.power
@@ -47,23 +47,13 @@ const decodeBuild = value => Object.fromEntries((value || '').split(',').flatMap
   return separator < 1 ? [] : [[pair.slice(0, separator), pair.slice(separator + 1)]]
 }))
 
-const loadSavedBuild = () => {
+const loadSavedBuild = products => {
   try {
     const shared = new URLSearchParams(window.location.search).get('build')
-    if (shared) return resolveBuild(decodeBuild(shared))
+    if (shared) return resolveBuild(decodeBuild(shared), products)
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}
-    return resolveBuild(Object.fromEntries(Object.entries(saved).map(([key, value]) => [key, value?.id || value])))
+    return resolveBuild(Object.fromEntries(Object.entries(saved).map(([key, value]) => [key, value?.id || value])), products)
   } catch { return {} }
-}
-
-const getPerformanceEstimate = selected => {
-  if (!selected.cpu || !selected.gpu) return null
-  const gpuFactor = selected.gpu.performanceIndex || 1
-  const cpuFactor = selected.cpu.performanceFactor || 1
-  const resolution = gpuFactor >= 2 ? '4K · calidad alta' : gpuFactor >= 1.35 ? '1440p · calidad alta' : '1080p · calidad alta'
-  const resolutionLoad = gpuFactor >= 2 ? .56 : gpuFactor >= 1.35 ? .72 : 1
-  const scale = gpuFactor * cpuFactor * resolutionLoad
-  return { resolution, games: [['Fortnite', Math.round(126 * scale)], ['Call of Duty: Warzone', Math.round(91 * scale)], ['Cyberpunk 2077', Math.round(66 * scale)], ['Valorant', Math.round(278 * scale)]] }
 }
 
 const getTotals = selected => {
@@ -93,13 +83,13 @@ const assemblyParts = [
 function PresetSelector({ presets, onApply }) {
   return <section className="builder-presets container" aria-labelledby="preset-title">
     <div className="builder-presets-intro"><h2 id="preset-title">Configuraciones recomendadas</h2><p>Carga una base probada y cambia cualquier pieza después.</p></div>
-    <div className="builder-preset-list">
+    {presets.length ? <div className="builder-preset-list">
       {presets.map(preset => <article className="builder-preset" key={preset.id}>
         <h3>{preset.name}</h3><p>{preset.description}</p>
         <div><span><s>{formatPrice(preset.subtotal)}</s><strong>{formatPrice(preset.finalTotal)}</strong></span><em>Ahorras {formatPrice(preset.discount)}</em></div>
         <button type="button" onClick={() => onApply(preset)}>Cargar configuración</button>
       </article>)}
-    </div>
+    </div> : <p className="builder-presets-empty">Por ahora no hay configuraciones completas disponibles. Puedes armar tu equipo pieza por pieza.</p>}
   </section>
 }
 
@@ -161,20 +151,21 @@ function ComponentOption({ option, selected, recommended, insufficient, onSelect
   </motion.button>
 }
 
-function PerformanceEstimate({ estimate }) {
+function PerformanceEstimate({ estimate, selected }) {
+  if (!estimate && selected.cpu && selected.gpu) return <section className="builder-performance builder-performance-unavailable container"><h2>Sin proyección de FPS para esta combinación</h2><p>Alguno de estos modelos aún no tiene datos de referencia. Puedes seguir armando la PC y revisar precio, consumo y compatibilidad.</p></section>
   return <AnimatePresence mode="wait">{estimate && <motion.section className="builder-performance container" key={estimate.resolution} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: .28, ease: [0.16, 1, 0.3, 1] }}>
     <div className="builder-performance-copy"><h2>Rendimiento estimado</h2><p>{estimate.resolution}. Valores orientativos según la combinación de procesador y gráfica elegida.</p></div>
     <div className="builder-game-list">{estimate.games.map(([game, fps]) => <article key={game}><span>{game}</span><strong>≈ {fps} FPS</strong><small>promedio estimado</small></article>)}</div>
-    <p className="builder-performance-note">El rendimiento real puede variar según ajustes, drivers, temperatura y versión del juego. DLSS se considera cuando está disponible.</p>
+    <p className="builder-performance-note">Proyección matemática a partir de referencias del catálogo; no es una prueba de laboratorio. El resultado real varía según ajustes, controladores, temperatura y versión del juego.</p>
   </motion.section>}</AnimatePresence>
 }
 
 function BuildSummary({ selected, totals, estimate, onEdit, onReset, onAddBuild }) {
   const selectedProducts = builderSteps.map(step => selected[step.key]).filter(Boolean)
-  const target = estimate?.resolution.split(' · ')[0] || 'Configuración parcial'
+  const target = estimate?.resolution.split(' · ')[0]
   const cartProducts = totals.complete ? selectedProducts.map(product => ({ ...product, price: Math.round(product.price * (1 - COMPLETE_DISCOUNT_RATE)), bundleDiscount: 5 })) : selectedProducts
   return <div className="builder-summary">
-    <div className="builder-summary-heading"><div><h2>{totals.complete ? 'Tu PC está lista para revisar' : 'Revisa y completa tu PC'}</h2><p>Puedes comprar una configuración parcial o volver a cualquier componente.</p></div><span>{estimate ? `Objetivo: ${target}` : 'Configuración parcial'}</span></div>
+    <div className="builder-summary-heading"><div><h2>{totals.complete ? 'Tu PC está lista para revisar' : 'Revisa y completa tu PC'}</h2><p>Puedes comprar una configuración parcial o volver a cualquier componente.</p></div><span>{estimate ? `Objetivo: ${target}` : totals.complete ? 'Rendimiento sin referencia' : 'Configuración parcial'}</span></div>
     <div className="builder-summary-list">{builderSteps.map((step, index) => {
       const product = selected[step.key]
       return <article className={product ? '' : 'empty'} key={step.key}><div><small>{step.label}</small><strong>{product?.name || 'Sin seleccionar'}</strong></div><b>{product ? formatPrice(product.price) : '—'}</b><button type="button" onClick={() => onEdit(index)}>{product ? 'Cambiar' : 'Elegir'}</button></article>
@@ -185,23 +176,23 @@ function BuildSummary({ selected, totals, estimate, onEdit, onReset, onAddBuild 
   </div>
 }
 
-export default function PCBuilderPage({ onAddBuild, onNavigate }) {
+export default function PCBuilderPage({ products, onAddBuild, onNavigate }) {
   const reduceMotion = useReducedMotion()
   const configRef = useRef(null)
   const contentRef = useRef(null)
   const [activeIndex, setActiveIndex] = useState(0)
-  const [selected, setSelected] = useState(loadSavedBuild)
+  const [selected, setSelected] = useState(() => loadSavedBuild(products))
   const [activeAction, setActiveAction] = useState(null)
   const [shareStatus, setShareStatus] = useState('')
   const [optionQuery, setOptionQuery] = useState('')
   const [visibleLimit, setVisibleLimit] = useState(4)
   const isSummary = activeIndex === builderSteps.length
   const currentStep = builderSteps[activeIndex]
-  const currentOptions = currentStep?.options(selected) || []
+  const currentOptions = currentStep?.options(selected, products) || []
   const totals = useMemo(() => getTotals(selected), [selected])
   const estimate = useMemo(() => getPerformanceEstimate(selected), [selected])
   const power = useMemo(() => getPowerEstimate(selected), [selected])
-  const presets = useMemo(() => presetDefinitions.map(preset => { const resolved = resolveBuild(preset.build); return { ...preset, ...getTotals(resolved), resolved } }), [])
+  const presets = useMemo(() => presetDefinitions.map(preset => { const resolved = resolveBuild(preset.build, products); return { ...preset, ...getTotals(resolved), resolved } }).filter(preset => preset.complete), [products])
   const matchingOptions = useMemo(() => {
     const term = optionQuery.trim().toLowerCase()
     return !term ? currentOptions : currentOptions.filter(option => `${option.brand} ${option.name} ${option.builderNote}`.toLowerCase().includes(term))
@@ -305,7 +296,7 @@ export default function PCBuilderPage({ onAddBuild, onNavigate }) {
         </motion.div></AnimatePresence>
       </section>
     </div>
-    <PerformanceEstimate estimate={estimate}/>
+    <PerformanceEstimate estimate={estimate} selected={selected}/>
     <div className="builder-mobile-bar"><div className="builder-mobile-bar-details"><small>{totals.complete ? 'Total con descuento' : 'Subtotal'}</small><strong>{formatPrice(totals.finalTotal)}</strong><ResetControl onReset={reset} disabled={!hasSelection}/></div>{!isSummary && <button type="button" className="button button-primary" onClick={next}>{activeIndex === builderSteps.length - 1 ? 'Revisar' : 'Siguiente'}</button>}</div>
   </main>
 }

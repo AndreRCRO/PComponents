@@ -7,11 +7,6 @@ export const products = [
     price: 2990, stock: 7, sales: 98, newRank: 8, image: '/products/asus-rtx4060.webp', recommendedWattage: 550, powerDraw: 115, performanceIndex: 1, length: 227,
     gallery: ['/products/asus-rtx4060.webp', '/products/asus-rtx4060-front.webp', '/products/asus-rtx4060-box.webp'],
     specs: [['Memoria', '8GB GDDR6'], ['Interfaz', 'PCI Express 4.0'], ['Resolución máxima', '7680 × 4320'], ['Refrigeración', 'Dual Fan Axial-tech']],
-    performance: {
-      system: 'Intel Core i7 · 32GB RAM · 1080p',
-      featured: ['Fortnite', '120+ FPS', 'Modo competitivo'],
-      games: [['Call of Duty: Warzone', '90+ FPS', 'Calidad alta'], ['Cyberpunk 2077', '60+ FPS', 'Calidad alta + DLSS']],
-    },
     longDescription: 'La ASUS Dual GeForce RTX 4060 combina la arquitectura NVIDIA Ada Lovelace con un diseño compacto de 2.5 ranuras. Es una opción equilibrada para jugar en 1080p con alta calidad, acelerar tareas creativas y mantener temperaturas controladas con bajo nivel de ruido.'
   },
   {
@@ -19,11 +14,6 @@ export const products = [
     name: 'MSI GeForce RTX 4070 Ventus 2X 12GB', description: 'Rendimiento para 1440p, 12GB GDDR6X y sistema térmico TORX FAN 4.0.',
     price: 5190, stock: 3, sales: 74, newRank: 9, image: '/products/msi-rtx4070.png', recommendedWattage: 650, powerDraw: 200, performanceIndex: 1.45, length: 242,
     specs: [['Memoria', '12GB GDDR6X'], ['Interfaz', 'PCI Express 4.0'], ['Resolución máxima', '7680 × 4320'], ['Refrigeración', 'TORX FAN 4.0']],
-    performance: {
-      system: 'Intel Core i7 · 32GB RAM · 1440p',
-      featured: ['Fortnite', '170+ FPS', 'Modo competitivo'],
-      games: [['Call of Duty: Warzone', '120+ FPS', 'Calidad alta'], ['Cyberpunk 2077', '80+ FPS', 'Calidad alta + DLSS']],
-    },
     longDescription: 'Diseñada para jugar en 1440p y crear contenido con aceleración por GPU. Su sistema de doble ventilador concentra el flujo de aire sobre el disipador y mantiene un formato compatible con una amplia variedad de gabinetes.'
   },
   {
@@ -156,7 +146,7 @@ export function filterProducts(list, { query = '', categories: selectedCategorie
     const matchesQuery = !term || `${product.brand} ${product.name} ${product.category} ${product.description}`.toLowerCase().includes(term)
     return matchesQuery
       && (!selectedCategories.length || selectedCategories.includes(product.category))
-      && (!selectedBrands.length || selectedBrands.some(brand => product.brands.includes(brand)))
+      && (!selectedBrands.length || selectedBrands.some(brand => (product.brands?.length ? product.brands : [product.brand]).includes(brand)))
       && product.price <= maxPrice
   })
 

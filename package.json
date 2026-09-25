@@ -4,17 +4,31 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently -k \"node --watch server/index.js\" \"vite --host 127.0.0.1\"",
     "build": "vite build",
+    "start": "node server/index.js --production",
+    "admin:create": "node server/create-admin.js",
     "preview": "vite preview",
-    "test": "node src/catalog.test.js && node src/builderPower.test.js"
+    "test": "node src/catalog.test.js && node src/builderPower.test.js && node src/performanceEstimate.test.js && node --test server/*.test.js"
   },
   "dependencies": {
+    "@inquirer/prompts": "^8.7.2",
     "@vitejs/plugin-react": "latest",
+    "better-sqlite3": "^13.0.3",
+    "cookie-parser": "^1.4.7",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
     "motion": "^13.4.0",
+    "multer": "^2.4.0",
     "ogl": "^1.0.11",
     "react": "latest",
     "react-dom": "latest",
-    "vite": "latest"
+    "sharp": "^0.35.4",
+    "vite": "latest",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5"
   }
 }

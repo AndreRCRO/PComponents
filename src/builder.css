@@ -294,3 +294,6 @@
   .builder-machine-glow { filter: blur(42px); }
   .builder-assembly-wave { display: none; }
 }
+.builder-performance-unavailable { padding: 24px; }
+.builder-performance-unavailable h2 { margin: 0 0 7px; font-size: 1.2rem; }
+.builder-performance-unavailable p { max-width: 70ch; margin: 0; color: #c4cdb8; font-size: .85rem; }
